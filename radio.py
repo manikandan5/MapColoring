@@ -1,124 +1,156 @@
 __author__ = 'Manikandan'
 
-import random
+"""
+The Program uses a recursive call to assign frequency to states and whenever there is
+a failure in the constraint check, it backtracks to change the assigned value
+All the functions are explained when used.
+Reference: Referred AIMA Berkeley Implementation of CSP to understand CSP
+"""
 
+import collections
+import copy
+from operator import itemgetter
+import sys
+
+#Main Program
+def MainProgram():
+
+    ReadStatesFromFile()                                # Reads given Input Data
+
+    ApplyLegacyConstraint("Legacy-Constraints")         # Assign Value to Legacy States
+
+    findMCV()                                           # Find the most Constrained Value
+
+    recCall(ChooseStateToAssign(), allotFreq, count)    # Recursive Call to assign value to States
+
+    print ("Number of backtracks is :"), count          # Statement to print the number of backtracks made
+
+    WriteOutput()                                       # Write output data to File
+
+#File to Read Input data
 def ReadStatesFromFile():
 
-    stateList = []      #List of 50 States
-    adjStates = {}      #List of adjacent states to the states which are stored in Key Values
-    allotFrequency = {}
+    FileData = open("adjacent-states","r")              #Open States Data from File
 
-    FileData = open("adjacent-states","r")      #Open States Data from File
+    stateData = FileData.readlines()                    #Reads each line of State Data
 
-    stateData = FileData.readlines()            #Reads each line of State Data
-
-    for state in stateData:                     #Loop to set each State and respective Adjacent States
+    for state in stateData:                             #Loop to set each State and respective Adjacent States
         tempStates = state.split()
-        stateList.append(tempStates[0])
         adjStates[tempStates[0]] = tempStates[1:len(tempStates)]
-        allotFrequency[tempStates[0]] = ['A','B','C','D']
+        allotFreq[tempStates[0]] = ['A','B','C','D']
 
-    return stateList, adjStates, allotFrequency
+#Function to assign value to Legacy States
+def ApplyLegacyConstraint(LegacyFile):
 
-def ApplyLegacyConstraint(stateList, adjStates, allotFrequency):
+    LegacyFileData = open("Legacy-Constraints","r")     #Open States Data from File
 
-    LegacyFileData = open("Legacy-Constraints","r")
-
-    LegacyData = LegacyFileData.readlines()
+    LegacyData = LegacyFileData.readlines()             #Reads each line of Legacy State Data
 
     for state in LegacyData:
         tempState = state.split()
-        allotFrequency[tempState[0]] = [tempState[1]]
-        printCheckConstraint(stateList, allotFrequency, adjStates)
-        try:
-            allotFrequency = RemoveFrequency(stateList, adjStates, tempState[0], allotFrequency)
-        except:
-            continue
-        print tempState[0]
-        stateList.remove(tempState[0])
-    return allotFrequency, stateList
+        allottedFreq[tempState[0]] = tempState[1]
+        legacyList.append(tempState[0])
 
-def RemoveFrequency(stateList, adjStates, assignedState, allotFrequency):
+#Function to find Most Constrained Value
+def findMCV():
 
-    neighbours = adjStates[assignedState]
+    tempMCV = {}                                        #Temporary Dictionary to sort based on number of adjacent states
 
-    FrequencyToRemove = allotFrequency[assignedState][0]
+    for state in adjStates:
+        tempMCV[state] = len(adjStates[state])
 
+    sorted_states = sorted(tempMCV.items(), key=itemgetter(1))
 
-    for neighbour in neighbours:
-        try:
-            allotFrequency[neighbour].remove(FrequencyToRemove)
-            if len(allotFrequency[neighbour]) == 1:
-                stateList.remove(neighbour)
-        except:
-            continue
+    for state in sorted_states:
+        if state[0] not in legacyList:
+            mcvList.append(state[0])
 
-    return allotFrequency
-
-def CheckConstraints(stateList, allotFrequency, adjStates):
-
-    for state in stateList:
-        try:
-            check = allotFrequency[state]
-            neighbours = adjStates[state]
-            if len(check)== 1 and len(neighbours)>0:
-                for neighbour in neighbours:
-                    if (allotFrequency[neighbour] == check):
-                        print neighbour, allotFrequency[neighbour], check
-                        return False
-        except:
-            continue
+#Function to check Constraints each time a value is assigned
+def constraintCheck(state, freq, allotFreq):
+    if ((len(allotFreq[state]) == 0) or (len(allotFreq[state])==1 and freq in allotFreq[state])):
+        return False
     return True
 
-def printCheckConstraint(stateList, allotFrequency, adjStates):
-    if(CheckConstraints(stateList, allotFrequency, adjStates)):
-        return True
+#Function to Update Frequency and perform constraint checks each time a value is assigned
+def updateFreq(state, allotFreq, freqList):
+    for tempState in adjStates[state]:
+        if not constraintCheck(tempState, freqList, allotFreq):
+            return False
+    for tempState in adjStates[state]:
+        if not updateAdjStates(allotFreq,freqList, tempState):
+            if freqList in allotFreq[tempState]:
+                allotFreq[tempState].append(freqList)
+            return False
+    return True
+
+#Function to remove frequency Values from adjacent states
+def updateAdjStates(allotFreq,freq, state):
+    if freq in allotFreq[state]:
+        allotFreq[state].remove(freq)
+        if len(allotFreq[state])==0:
+             return False
+    return True
+
+#Function to select the Most Constrained State to allot value to
+def ChooseStateToAssign():
+    if len(mcvList) != 0:
+        return mcvList.pop()
     else:
-        return False
+        return -1
 
-def ChooseStateToAssign(stateList, adjStates):
-    count = len(adjStates[stateList[0]])
-    chosenState = stateList[0]
-    for state in stateList:
-        if len(adjStates[state]) > count :
-            chosenState = state
+#Add the state to the list of assigned state
+def RemoveStateToAssign(state):
+    mcvList.append(state)
 
-    return chosenState
 
-def ApplyValueToChosenState(stateList, adjStates, allotFrequency, chosenState):
-
-    Frequencies = allotFrequency[chosenState]
-
-    allotFrequency[chosenState] = Frequencies[0]
-
-    printCheckConstraint(stateList, allotFrequency, adjStates)
-
-    allotFrequency = RemoveFrequency(stateList, adjStates, chosenState, allotFrequency)
-
-    stateList.remove(chosenState)
-
-    return allotFrequency, stateList
-
-def backtracking(currState, stateDomain):
+#Sanity checks each time a state is allotted
+def validityCheck(state, freqList, allotFreq, allotted):
+    if freqList in allotFreq[state] and adjCheck(state, allotted):
+        return True
     return False
 
+#Adjacent States Violation Check
+def adjCheck(state,allotted):
+    for tempState in adjStates[state]:
+        if tempState in allottedFreq:
+            if allotted==allottedFreq[tempState]:
+                return False
+    return True
 
-stateList = []
-adjStates = {}
-allotFrequency = {}
+#Recursive call to assign values to states and backtrack
+def recCall(state, allotFreq, count):
+    for freqList in ListofFrquencies:
+        if validityCheck(state, freqList, allotFreq, freqList):
+            allotFreqCopy=copy.deepcopy(allotFreq)
+            if updateFreq(state, allotFreqCopy, freqList):
+                allottedFreq.update({state:freqList})
+                state = ChooseStateToAssign()
+                if state == -1:
+                    return True
+                else:
+                    if recCall(state, allotFreqCopy, count):
+                        return True
+                    else:
+                        RemoveStateToAssign(state)
+                        count+=1
+    return False
 
-stateList, adjStates, allotFrequency = ReadStatesFromFile()
-
-allotFrequency, stateList = ApplyLegacyConstraint(stateList, adjStates, allotFrequency)
-
-chosenState = ChooseStateToAssign(stateList, adjStates)
-check = 0
-
-tempAllotFrequency = allotFrequency
+#Funtion to write Output
+def WriteOutput():
+    fileWrite = open("Results.txt",'w')
+    for state, freq in sorted(allottedFreq.items()):
+        fileWrite.write(state + ":" + freq + '\n')
+    fileWrite.close()
 
 
+adjStates = {}              # Dictionary to hold list of States and adjacent states as keys
+allottedFreq = {}           # Dictionary which holds the values of frequencies to states that are allotted
+allotFreq = {}              # Dictionary to hold list of possible values to states that are not yet allotted
+mcvList = []                # Most Constrained Values list
+count=0                     # Backtrack count
+legacyList=[]               # List of Legacy States
+ListofFrquencies = ['A','B','C','D']
+
+MainProgram()
 
 
-#print len(stateList)
-
-#print allotFrequency
