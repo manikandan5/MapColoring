@@ -42,14 +42,18 @@ def ReadStatesFromFile():
 #Function to assign value to Legacy States
 def ApplyLegacyConstraint(LegacyFile):
 
-    LegacyFileData = open("Legacy-Constraints","r")     #Open States Data from File
+    try:
+        LegacyFileData = open(sys.argv[1],"r")     #Open States Data from File
 
-    LegacyData = LegacyFileData.readlines()             #Reads each line of Legacy State Data
+        LegacyData = LegacyFileData.readlines()             #Reads each line of Legacy State Data
 
-    for state in LegacyData:
-        tempState = state.split()
-        allottedFreq[tempState[0]] = tempState[1]
-        legacyList.append(tempState[0])
+        for state in LegacyData:
+            tempState = state.split()
+            allottedFreq[tempState[0]] = tempState[1]
+            legacyList.append(tempState[0])
+
+    except:
+        print "Problem with Legacy Data Format"
 
 #Function to find Most Constrained Value
 def findMCV():
@@ -152,5 +156,6 @@ legacyList=[]               # List of Legacy States
 ListofFrquencies = ['A','B','C','D']
 
 MainProgram()
+
 
 
