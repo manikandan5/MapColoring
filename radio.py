@@ -23,7 +23,7 @@ def MainProgram():
 
     recCall(ChooseStateToAssign(), allotFreq, count)    # Recursive Call to assign value to States
 
-    print ("Number of backtracks is :"), count          # Statement to print the number of backtracks made
+    print ("Number of backtracks: "), count          # Statement to print the number of backtracks made
 
     WriteOutput()                                       # Write output data to File
 
