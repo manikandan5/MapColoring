@@ -141,7 +141,7 @@ def recCall(state, allotFreq, count):
 
 #Funtion to write Output
 def WriteOutput():
-    fileWrite = open("Results.txt",'w')
+    fileWrite = open("results.txt",'w')
     for state, freq in sorted(allottedFreq.items()):
         fileWrite.write(state + ":" + freq + '\n')
     fileWrite.close()
