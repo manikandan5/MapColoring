@@ -11,6 +11,6 @@ This code was written for the course Elements of Artificial Intelligence (CSCI-B
 
 **How does it find it?** <br/>
 
-* The program uses Arc Consistency with backracking to achieve the expected output.
+* The program uses Arc Consistency with backtracking to achieve the expected output.
 
 Detailed explanation about how the code works and the reason why we chose this implementation could be found [here](https://github.com/manikandan5/MapColoring/blob/master/radio.py).
